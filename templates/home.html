@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>We are here</title>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+		<meta charset="utf-8">
+		<style>
+			html, body, #map-canvas {
+				height: 100%;
+				margin: 0px;
+				padding: 0px
+			}
+			ul.info-win {
+				color: #254117;
+			}
+			
+			li:hover {
+				text-decoration:none;
+				font-weight:bold;
+			}
+			
+			div#graph {
+				visibility: hidden;
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				width: 480px;
+				height: 270px;
+				z-index: 2;
+				/*border: solid 1px black;*/
+			}
+			
+		</style>
+		<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+		<script	src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	    <script src="https://www.google.com/jsapi"></script>
+		
+		<script	src="static/js/utils.js"></script>
+		<script>
+		
+			google.load('visualization', '1.0', {'packages':['corechart']});
+			var map;
+			var poly = new google.maps.Polyline();
+			var cLatLng;
+			var marker;
+			var infoWindow;
+			var bounds = new google.maps.LatLngBounds();
+			var offset = new Date().getTimezoneOffset();
+			var historyData;
+			var graphDiv;
+			
+			function formatInfoWindow(data) {
+				var content = mobileCheck() ? mobileIWContent : desktopIWContent;
+				var dt = new Date(data['time']*1000);
+				dt.setMinutes(dt.getMinutes() - offset);
+				return content.format(formatDateTime(dt), data['latitude'].toFixed(5), data['longitude'].toFixed(5),
+						data['altitude'], data['speed'], data['bearing'], data['accuracy'],
+						data['provider'], data['battlevel'], (data['charging']==1) ? 'charging':'not charging');
+			}
+			
+			function refreshPosition(){
+
+				$.ajax({
+				    url: '/web/now',
+				    type: 'GET',
+				    dataType: 'json',
+				    success: function(data){
+				    	var d = data[0];
+				    	infoWindow.setContent(formatInfoWindow(d));
+				    	cLatLng = new google.maps.LatLng(d['latitude'], d['longitude']);
+				    	marker.setPosition(cLatLng);
+				    	//map.setCenter(cLatLng);
+						setTimeout(refreshPosition, 15000);
+				    },
+					error: function(data) {
+					        alert('woops! could not retrieve data; please reload the page');
+					    }
+					});
+			}
+
+			function drawChart(chartType, data) {
+				
+				if (chartType == 'liPos') {
+					$(graphDiv).css('visibility', 'hidden');
+				}
+				else {
+					poly.setMap(null);
+					bounds = new google.maps.LatLngBounds();
+					$(graphDiv).css('visibility', 'visible');
+					map.setCenter(cLatLng);
+				}
+				if (chartType == 'liTim') {
+						var delays = Array();
+						delays.push(['Moment', 'Delay']);
+						for (var i=0;i<historyData.length-1;i++) {
+							var dt = new Date(historyData[i]['time']*1000);
+							dt.setMinutes(dt.getMinutes() - offset);
+							var a = historyData[i]['time'];
+							var b = historyData[i+1]['time'];
+							delays.push([dt, b-a]);
+						}
+						var d = google.visualization.arrayToDataTable(delays);
+						
+						var options = {title: 'Delay graph', vAxis: {viewWindow: {min: 0, max:1000}}}
+				        var chart = new google.visualization.LineChart(graphDiv);
+				        chart.draw(d, options);
+				}
+				else if (chartType == 'liPos') {
+						var poss = Array();
+						for (var i=0;i<historyData.length;i++) {
+							var p = new google.maps.LatLng(historyData[i]['latitude'], historyData[i]['longitude']);
+							bounds.extend(p);
+							poss.push(p);
+						}
+						
+						poly = new google.maps.Polyline({
+						    path: poss,
+						    geodesic: true,
+						    strokeColor: '#000080',
+						    strokeOpacity: 0.8,
+						    strokeWeight: 4
+						  });
+
+						poly.setMap(map);
+						map.fitBounds(bounds); 
+				}
+				else if (chartType == 'liAlt') {
+						var alts = Array();
+						alts.push(['Moment', 'Altitude']);
+						for (var i=0;i<historyData.length;i++) {
+							var dt = new Date(historyData[i]['time']*1000);
+							dt.setMinutes(dt.getMinutes() - offset);
+							alts.push([dt, historyData[i]['altitude']]);
+						}
+						var d = google.visualization.arrayToDataTable(alts);
+						
+						var options = {title: 'Altitude graph', vAxis: {viewWindow: {min: 0, max:1000}}}
+				        var chart = new google.visualization.LineChart(graphDiv);
+				        chart.draw(d, options);
+					}
+				else if (chartType == 'liSpe') {
+						var speeds = Array();
+						speeds.push(['Moment', 'Speed']);
+						for (var i=0;i<historyData.length;i++) {
+							var dt = new Date(historyData[i]['time']*1000);
+							dt.setMinutes(dt.getMinutes() - offset);
+							speeds.push([dt, historyData[i]['speed']]);
+						}
+						var d = google.visualization.arrayToDataTable(speeds);
+						
+						var options = {title: 'Speed graph', vAxis: {viewWindow: {min: 0, max:200}}}
+				        var chart = new google.visualization.LineChart(graphDiv);
+				        chart.draw(d, options);
+					}
+					
+				else if (chartType == 'liBea'){
+					var bearings = Array();
+					bearings.push(['Moment', 'Bearing']);
+					for (var i=0;i<historyData.length;i++) {
+						var dt = new Date(historyData[i]['time']*1000);
+						dt.setMinutes(dt.getMinutes() - offset);
+						bearings.push([dt, historyData[i]['bearing']]);
+					}
+					var d = google.visualization.arrayToDataTable(bearings);
+					
+					var options = {title: 'Bearing graph', vAxis: {viewWindow: {min: 0, max:360}}}
+			        var chart = new google.visualization.LineChart(graphDiv);
+			        chart.draw(d, options);
+				}
+				else if (chartType == 'liAcc') {
+						var accs = Array();
+						accs.push(['Moment', 'Accuracy']);
+						for (var i=0;i<historyData.length;i++) {
+							var dt = new Date(historyData[i]['time']*1000);
+							dt.setMinutes(dt.getMinutes() - offset);
+							accs.push([dt, historyData[i]['accuracy']]);
+						}
+						var d = google.visualization.arrayToDataTable(accs);
+						
+						var options = {title: 'Accuracy graph', vAxis: {viewWindow: {min: 0, max:3000}}}
+				        var chart = new google.visualization.LineChart(graphDiv);
+				        chart.draw(d, options);
+					}
+				else if (chartType == 'liPro') {
+						var gps=0;
+						var net=0;
+						for (var i=0;i<historyData.length;i++) {
+							if (historyData[i]['provider'] == 'gps')
+								gps += 1
+							else
+								net += 1;
+						}
+						var d = google.visualization.arrayToDataTable([
+							['Type', 'Percent'],
+							['GPS', gps],
+							['GSM', net],
+						]);
+						
+						var options = {title: 'Location source'};
+				        var chart = new google.visualization.PieChart(graphDiv);
+				        chart.draw(d, options);
+					}
+				else if (chartType == 'liBat') {
+						var bats = Array();
+						bats.push(['Moment', 'Battery']);
+						for (var i=0;i<historyData.length;i++) {
+							var dt = new Date(historyData[i]['time']*1000);
+							dt.setMinutes(dt.getMinutes() - offset);
+							bats.push([dt, historyData[i]['battlevel']]);
+						}
+						var d = google.visualization.arrayToDataTable(bats);
+						
+						var options = {title: 'Battery graph', vAxis: {viewWindow: {min: 0, max:100}}};
+				        var chart = new google.visualization.LineChart(graphDiv);
+				        chart.draw(d, options);
+					}
+				else
+					alert('Not defined');
+			}
+			
+			function initialize() {
+				var mapOptions = {
+					zoom : 8,
+					center : new google.maps.LatLng(46, 25)
+				};
+				
+				map = new google.maps.Map(document.getElementById('map-canvas'),
+						mapOptions);
+				
+				graphDiv = $('#graph')[0];
+				$(graphDiv).click(function() {
+					$(graphDiv).css('visibility', 'hidden');
+				});
+				
+				google.maps.event.addListener(map, 'click', function(){
+					infoWindow.close();
+					$(graphDiv).css('visibility', 'hidden');
+				});
+				
+				$.ajax({
+				    url: '/web/now',
+				    type: 'GET',
+				    dataType: 'json',
+				    success: function(data){
+				    	  var d = data[0];
+				    	  cLatLng = new google.maps.LatLng(d['latitude'], d['longitude']);
+				    	  marker = new google.maps.Marker({
+				    	      position: cLatLng,
+				    	      map: map,
+				    	      title: 'Evelina & (Ema,Estera,Ionut,Radu)'
+				    	  });
+				    	  infoWindow = new google.maps.InfoWindow({
+				    	      content: formatInfoWindow(d)
+				    	  });
+				    	  google.maps.event.addListener(marker, 'click', function() {
+				    		    infoWindow.open(map,marker);
+				    		  });
+				    	  
+				    	  map.setCenter(cLatLng);
+				    	  
+				    	  google.maps.event.addListener(infoWindow, 'domready', function() {
+				    		  $("#dataList li").click(function() {
+				    			  	var chartType = $(this).attr('id');
+				    			  	if (!historyData) {
+				    			  		$.ajax({
+				    					    url: '/web/history',
+				    					    type: 'GET',
+				    					    dataType: 'json',
+				    					    success: function(data){
+				    					    	  historyData = data;
+				    					    	  drawChart(chartType, historyData);
+				    					   	 }
+				    				  	});
+				    			  	}
+				    			  	else {
+				    			  		drawChart(chartType, historyData);
+				    			  	}
+					    		});
+				    		});
+				    	  
+				    	  infoWindow.open(map,marker);
+
+				    },
+				    error: function(data) {
+				        alert('woops! could not retrieve data');
+				    }
+				});
+				
+				refreshPosition();
+			}
+		
+			google.maps.event.addDomListener(window, 'load', initialize);
+		</script>
+	</head>
+<body>
+	<div id="map-canvas"></div>
+	<div id="graph"></div>
+</body>
+</html>
