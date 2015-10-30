@@ -9,8 +9,9 @@ import json
 def gps_to_json(positions):
     data = []
     for p in positions:
-        p['time'] = int(p['time'].strftime('%s')) 
-        data.append(p)
+        aux = p.copy()
+        aux['time'] = int(aux['time'].strftime('%s'))
+        data.append(aux)
     return json.dumps(data)
 
 def convert_projection(x, y, src_proj='+init=EPSG:4326', dst_proj='+init=EPSG:31700'):

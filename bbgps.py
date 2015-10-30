@@ -16,6 +16,7 @@ from utils import gps_to_json
 logging.basicConfig(level=settings.LOG_LEVEL, #filename='bbgps.log', 
     format='[%(asctime)s] - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
+_cache = {}
 
 class BaseHandler(tornado.web.RequestHandler):
     
@@ -54,6 +55,7 @@ class UploadHandler(BaseHandler):
         position['charging'] = int(data['charging'][0])
         position['accuracy'] = float(data['accuracy'][0])
         
+        _cache['last_pos'] = [position]
         self.database.positions.insert(position)
         logging.info('received %s' % json.dumps(position))
         self.finish(json.dumps({'status': 'OK'}))
@@ -67,10 +69,11 @@ class WebHandler(BaseHandler):
     @tornado.web.asynchronous
     def get(self, op):
         if op == 'history':
-            positions = list(self.database.positions.find({}, {"_id" : 0}).sort([('_id', -1)]).limit(8192))
-            positions.reverse()
+            positions = list(self.database.positions.find({}, {"_id" : 0}).sort([('_id', 1)]).limit(8192))
         elif op == 'now':
-            positions = self.database.positions.find({}, {'_id' : 0}).sort([('_id', -1)]).limit(1)
+            if not _cache.get('last_pos'):
+                _cache['last_pos'] = list(self.database.positions.find({}, {'_id' : 0}).sort([('_id', -1)]).limit(1))
+            positions = _cache['last_pos']
         else:
             positions = []
         data = gps_to_json(positions)
