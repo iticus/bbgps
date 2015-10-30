@@ -6,11 +6,12 @@ A very simple web interface for the great Android application called [Big Brothe
 ### Demo
 You can check a running version of this application [here](http://bbgps.rssind.com/). Some details:
 
+* we made the trip (Romania - Italy - France - Spain and back) in August 2014
 * I used an old [Google Nexus S](https://en.wikipedia.org/wiki/Nexus_S) phone that I kept in the car and charged it only while driving
 * had to manually switch mobile providers a few times (usually at border crossings)
 * I set-up the Android application to send the position every 3 minutes; it worked quite OK and the battery usually lasted around two days 
 * the application is hosted on a [Raspberry PI 2](https://www.raspberrypi.org/products/raspberry-pi-2-model-b/) running in my house
-* I have a dynamic IP from my ISP so there might be some update delay (usually due to power outages), the domain is hosted at [Free DNS](http://freedns.afraid.org/)
+* I have a dynamic IP from my ISP so there might be some DNS update delay (usually due to power outages), the domain is hosted at [Free DNS](http://freedns.afraid.org/)
 
 Some screenshots:
 
@@ -34,4 +35,4 @@ This web interface is written in [Python](https://www.python.org/) and uses the 
  * copy the settings file (```cp settings_default.py settings.py```)
  * edit the settings (mainly ```SECRET``` and ```DB_URI```) 
  * make sure you have [MongoDB](https://www.mongodb.org/) running or use a hosted service (I used the free version from [MongoLab](https://mongolab.com/) mainly because getting MongoDB to run on RaspberryPi is tedious)
- * start the application ```python bbgps.py```
+ * start the application ```python -u bbgps.py &>> bbgps.log &```
