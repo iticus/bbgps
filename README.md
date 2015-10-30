@@ -35,4 +35,8 @@ This web interface is written in [Python](https://www.python.org/) and uses the 
  * copy the settings file (```cp settings_default.py settings.py```)
  * edit the settings (mainly ```SECRET``` and ```DB_URI```) 
  * make sure you have [MongoDB](https://www.mongodb.org/) running or use a hosted service (I used the free version from [MongoLab](https://mongolab.com/) mainly because getting MongoDB to run on RaspberryPi is tedious)
+<<<<<<< HEAD
  * start the application ```python -u bbgps.py &>> bbgps.log &```
+=======
+ * start the application ```python bbgps.py```
+>>>>>>> branch 'master' of https://github.com/iticus/bbgps.git
