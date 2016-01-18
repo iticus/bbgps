@@ -4,7 +4,7 @@
 A very simple web interface for the great Android application called [Big Brother GPS](https://play.google.com/store/apps/details?id=org.gnarf.bigbrother.gps) that regularly sends the phone position to a server via a POST request. It supports authentication via a **secret** and reports various parameters (*latitude, longitude, speed, bearing, altitude, battery level, accuracy, provider etc.*)
 
 ### Demo
-You can check a running version of this application [here](http://bbgps.rssind.com/). Some details:
+You can check a running version of this application [here](http://bbgps.iticus.ro/). Some details:
 
 * we made the trip (Romania - Italy - France - Spain and back) in August 2014
 * I used an old [Google Nexus S](https://en.wikipedia.org/wiki/Nexus_S) phone that I kept in the car and charged it only while driving
@@ -15,11 +15,11 @@ You can check a running version of this application [here](http://bbgps.rssind.c
 
 Some screenshots:
 
-![Path](http://rssind.com/images/path.png)
+![Path](http://iticus.ro/static/img/bbgps_path.png)
 
-![Source](http://rssind.com/images/source.png)
+![Source](http://iticus.ro/static/img/bbgps_source.png)
 
-![Battery](http://rssind.com/images/battery.png)
+![Battery](http://iticus.ro/static/img/bbgps_battery.png)
 
 ### Requirements
 This web interface is written in [Python](https://www.python.org/) and uses the following packages:
@@ -35,8 +35,4 @@ This web interface is written in [Python](https://www.python.org/) and uses the 
  * copy the settings file (```cp settings_default.py settings.py```)
  * edit the settings (mainly ```SECRET``` and ```DB_URI```) 
  * make sure you have [MongoDB](https://www.mongodb.org/) running or use a hosted service (I used the free version from [MongoLab](https://mongolab.com/) mainly because getting MongoDB to run on RaspberryPi is tedious)
-<<<<<<< HEAD
  * start the application ```python -u bbgps.py &>> bbgps.log &```
-=======
- * start the application ```python bbgps.py```
->>>>>>> branch 'master' of https://github.com/iticus/bbgps.git
