@@ -1,0 +1,14 @@
+[Unit]
+Description=BBGPS Service
+After=default.target
+
+[Service]
+User=www-data
+Group=www-data
+RestartSec=3
+Restart=always
+WorkingDirectory=/var/www/bbgps
+ExecStart=/usr/bin/python bbgps.py
+
+[Install]
+WantedBy=default.target
